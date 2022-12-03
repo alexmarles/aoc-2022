@@ -6,6 +6,7 @@ const { getInputData, sum } = require('../utils');
 // PAPER: B / Y
 // SCISSORS: C / Z
 
+// SHAPES
 const S = {
     ROCK: 1,
     PAPER: 2,
@@ -15,6 +16,7 @@ const S = {
     WIN: 6,
 };
 
+// ROUND
 const R = {
     A: {
         X: S.ROCK + S.DRAW,
@@ -33,6 +35,32 @@ const R = {
     },
 };
 
+// ROCK: A / X
+// PAPER: B / Y
+// SCISSORS: C / Z
+// X: LOSE
+// Y: DRAW
+// Z: WIN
+
+// HAND
+const H = {
+    A: {
+        X: 'Z',
+        Y: 'X',
+        Z: 'Y',
+    },
+    B: {
+        X: 'X',
+        Y: 'Y',
+        Z: 'Z',
+    },
+    C: {
+        X: 'Y',
+        Y: 'Z',
+        Z: 'X',
+    },
+};
+
 function day02A(file) {
     const data = getInputData(file);
 
@@ -47,7 +75,13 @@ function day02A(file) {
 function day02B(file) {
     const data = getInputData(file);
 
-    return data;
+    const rounds = data.map(round => {
+        const [opponent, result] = round.split(' ');
+        const me = H[opponent][result];
+        return R[opponent][me];
+    });
+
+    return sum(rounds);
 }
 
 module.exports = {
