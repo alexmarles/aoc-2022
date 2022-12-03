@@ -2,9 +2,7 @@
 
 const { getInputData, sum, max } = require('../utils');
 
-function day01A(file) {
-    const data = getInputData(file);
-
+function computeElves(data) {
     const elves = [];
     const elfCalories = {
         food: [],
@@ -21,6 +19,14 @@ function day01A(file) {
             elfCalories.food.push(Number(line));
         }
     });
+    return elves;
+}
+
+function day01A(file) {
+    const data = getInputData(file);
+    data.push('');
+
+    const elves = computeElves(data);
 
     const maxCalories = elves.reduce(
         (acc, current) => max([acc, current.sum]),
@@ -30,6 +36,18 @@ function day01A(file) {
     return maxCalories;
 }
 
+function day01B(file) {
+    const data = getInputData(file);
+    data.push('');
+
+    const elves = computeElves(data);
+    const calories = elves.map(elf => elf.sum);
+
+    const top3 = calories.sort((a, b) => b - a).slice(0, 3);
+    return sum(top3);
+}
+
 module.exports = {
     day01A,
+    day01B,
 };
