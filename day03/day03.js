@@ -32,7 +32,22 @@ function day03A(file) {
 function day03B(file) {
     const data = getInputData(file);
 
-    return data;
+    const groups = [];
+    for (let i = 0; i < data.length - 1; i = i + 3) {
+        groups.push([data[i + 0], data[i + 1], data[i + 2]]);
+    }
+    const commons = groups.map(([s1, s2, s3]) => {
+        let common;
+        s1.split('').forEach(item => {
+            if (s2.indexOf(item) > -1 && s3.indexOf(item) > -1) common = item;
+        });
+        return common;
+    });
+    const values = commons.map(item => {
+        p = item.charCodeAt();
+        return p > code_Z ? p - lowerCaseOffset : p - upperCaseOffset;
+    });
+    return sum(values);
 }
 
 module.exports = {
