@@ -19,6 +19,18 @@ function day04A(file) {
 
 function day04B(file) {
     const data = getInputData(file);
+    const pairs = data.map(pairing =>
+        pairing.split(',').map(pair => pair.split('-').map(a => Number(a)))
+    );
+    const contained = pairs.map(
+        ([e1, e2]) =>
+            !(
+                (e1[0] < e2[0] && e1[1] < e2[0]) ||
+                (e1[0] > e2[1] && e1[1] > e2[1])
+            )
+    );
+
+    return contained.filter(c => c).length;
 }
 
 module.exports = {
