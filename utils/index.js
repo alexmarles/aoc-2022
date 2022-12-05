@@ -1,4 +1,4 @@
-const { getInputData } = require('./getInputData');
+const { getInputData, getRawInputData } = require('./getInputData');
 const { log } = require('./log');
 const { max } = require('./max');
 const { min } = require('./min');
@@ -8,6 +8,7 @@ const { transpose } = require('./transpose');
 
 module.exports = {
     getInputData,
+    getRawInputData,
     log,
     max,
     min,
