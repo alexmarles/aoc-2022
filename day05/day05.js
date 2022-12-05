@@ -2,8 +2,7 @@
 
 const { getRawInputData } = require('../utils');
 
-function day05A(file) {
-    const data = getRawInputData(file);
+function getStacks(data) {
     const groundLvl = data.indexOf('') - 1;
     const ground = data[groundLvl].split('');
     const stacks = [];
@@ -26,8 +25,11 @@ function day05A(file) {
     stacks.forEach((stack, i) => {
         stacks[i].crates = stack.crates.reverse();
     });
-    // We've got the stacks!
 
+    return stacks;
+}
+function getMoves(data) {
+    const groundLvl = data.indexOf('') - 1;
     const moves = [];
     data.slice(groundLvl + 1, data.length).forEach(move => {
         if (move.trim() === '') return;
@@ -37,6 +39,14 @@ function day05A(file) {
             to: Number(move.match(/to\s(\d*)/)[1]),
         });
     });
+
+    return moves;
+}
+
+function day05A(file) {
+    const data = getRawInputData(file);
+    const stacks = getStacks(data);
+    const moves = getMoves(data);
 
     moves.forEach(move => {
         while (move.amount-- > 0) {
@@ -52,39 +62,8 @@ function day05A(file) {
 
 function day05B(file) {
     const data = getRawInputData(file);
-    const groundLvl = data.indexOf('') - 1;
-    const ground = data[groundLvl].split('');
-    const stacks = [];
-    ground.forEach((p, i) => {
-        if (p === ' ') return;
-        stacks.push({
-            index: i,
-            crates: [],
-        });
-    });
-    data.slice(0, groundLvl).forEach(level => {
-        level.split('').forEach((pos, i) => {
-            if (pos === ' ' || pos === '[' || pos === ']') return;
-            const stack = stacks.filter(s => s.index === i)[0];
-            const stackIndex = stacks.indexOf(stack);
-
-            stacks[stackIndex].crates.push(pos);
-        });
-    });
-    stacks.forEach((stack, i) => {
-        stacks[i].crates = stack.crates.reverse();
-    });
-    // We've got the stacks!
-
-    const moves = [];
-    data.slice(groundLvl + 1, data.length).forEach(move => {
-        if (move.trim() === '') return;
-        moves.push({
-            amount: Number(move.match(/move\s(\d*)/)[1]),
-            from: Number(move.match(/from\s(\d*)/)[1]),
-            to: Number(move.match(/to\s(\d*)/)[1]),
-        });
-    });
+    const stacks = getStacks(data);
+    const moves = getMoves(data);
 
     moves.forEach(move => {
         const indexFrom = stacks[move.from - 1].crates.length - move.amount;
