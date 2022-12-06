@@ -35,6 +35,17 @@ function day06A(file) {
     return position;
 }
 
+function day06B(file) {
+    const data = getInputData(file)[0];
+
+    const stream = data.split('');
+
+    const position = detectPositionOfPatternOf(stream, 14);
+
+    return position;
+}
+
 module.exports = {
     day06A,
+    day06B,
 };
