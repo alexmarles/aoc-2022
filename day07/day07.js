@@ -87,6 +87,28 @@ function day07A(file) {
     return totalSizes;
 }
 
+function day07B(file) {
+    const TOTAL_SPACE = 70000000;
+    const REQUIRED_SPACE = 30000000;
+    const data = getInputData(file);
+    const fileSystem = parseFileSystem(data);
+    const usedSpace = fileSystem['/'].size;
+    const freeSpace = TOTAL_SPACE - usedSpace;
+    const needToDelete = REQUIRED_SPACE - freeSpace;
+
+    const bigEnough = Math.min.apply(
+        Math,
+        Object.values(fileSystem)
+            .map(f => {
+                if (f.children) return f.size;
+            })
+            .filter(size => size > needToDelete)
+    );
+
+    return bigEnough;
+}
+
 module.exports = {
     day07A,
+    day07B,
 };
