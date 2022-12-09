@@ -2,20 +2,12 @@
 
 const { getInputData } = require('../utils');
 
-const UP = 'U';
-const DOWN = 'D';
-const RIGHT = 'R';
-const LEFT = 'L';
-
 function moveRopeWithKnots(moves, numberOfKnots) {
     const rope = [...new Array(numberOfKnots)].map(() => ({ x: 0, y: 0 }));
     const visitedPositions = new Set();
-    visitedPositions.add('0_0');
 
     function areAdjacent(prev, curr) {
-        if (Math.abs(prev.y - curr.y) > 1) return false;
-        if (Math.abs(prev.x - curr.x) > 1) return false;
-        return true;
+        return Math.abs(prev.y - curr.y) <= 1 && Math.abs(prev.x - curr.x) <= 1;
     }
 
     moves.forEach(move => {
@@ -23,29 +15,25 @@ function moveRopeWithKnots(moves, numberOfKnots) {
         for (let step = 0; step < totalSteps; step++) {
             rope.forEach((knot, i) => {
                 if (i === 0) {
-                    if (direction === UP) knot.y++;
-                    if (direction === DOWN) knot.y--;
-                    if (direction === RIGHT) knot.x++;
-                    if (direction === LEFT) knot.x--;
+                    if (direction === 'U') knot.y++;
+                    if (direction === 'D') knot.y--;
+                    if (direction === 'R') knot.x++;
+                    if (direction === 'L') knot.x--;
                 } else {
                     const prev = rope[i - 1];
                     if (!areAdjacent(prev, knot)) {
-                        const vertical = prev.y - knot.y;
-                        const horizontal = prev.x - knot.x;
+                        knot.y += Math.sign(prev.y - knot.y);
+                        knot.x += Math.sign(prev.x - knot.x);
 
-                        knot.y += Math.sign(vertical);
-                        knot.x += Math.sign(horizontal);
-
-                        if (i === rope.length - 1) {
+                        if (i === rope.length - 1)
                             visitedPositions.add(`${knot.x}_${knot.y}`);
-                        }
                     }
                 }
             });
         }
     });
 
-    return visitedPositions.size;
+    return visitedPositions.size + 1;
 }
 
 function day09A(file) {
