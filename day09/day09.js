@@ -7,51 +7,8 @@ const DOWN = 'D';
 const RIGHT = 'R';
 const LEFT = 'L';
 
-function day09A(file) {
-    const data = getInputData(file);
-    const head = {
-        x: 0,
-        y: 0,
-    };
-    const tail = {
-        x: 0,
-        y: 0,
-    };
-    const visitedPositions = new Set();
-    visitedPositions.add('0_0');
-
-    function areAdjacent(head, tail) {
-        if (Math.abs(head.y - tail.y) > 1) return false;
-        if (Math.abs(head.x - tail.x) > 1) return false;
-        return true;
-    }
-
-    data.forEach(move => {
-        const [direction, steps] = move.split(' ');
-        for (let i = 0; i < steps; i++) {
-            if (direction === UP) head.y++;
-            if (direction === DOWN) head.y--;
-            if (direction === RIGHT) head.x++;
-            if (direction === LEFT) head.x--;
-
-            if (!areAdjacent(head, tail)) {
-                const vertical = head.y - tail.y;
-                const horizontal = head.x - tail.x;
-
-                tail.y += Math.sign(vertical);
-                tail.x += Math.sign(horizontal);
-            }
-
-            visitedPositions.add(`${tail.x}_${tail.y}`);
-        }
-    });
-
-    return visitedPositions.size;
-}
-
-function day09B(file) {
-    const data = getInputData(file);
-    const rope = [...new Array(10)].map(() => ({ x: 0, y: 0 }));
+function moveRopeWithKnots(moves, numberOfKnots) {
+    const rope = [...new Array(numberOfKnots)].map(() => ({ x: 0, y: 0 }));
     const visitedPositions = new Set();
     visitedPositions.add('0_0');
 
@@ -61,7 +18,7 @@ function day09B(file) {
         return true;
     }
 
-    data.forEach(move => {
+    moves.forEach(move => {
         const [direction, totalSteps] = move.split(' ');
         for (let step = 0; step < totalSteps; step++) {
             rope.forEach((knot, i) => {
@@ -89,6 +46,16 @@ function day09B(file) {
     });
 
     return visitedPositions.size;
+}
+
+function day09A(file) {
+    const data = getInputData(file);
+    return moveRopeWithKnots(data, 2);
+}
+
+function day09B(file) {
+    const data = getInputData(file);
+    return moveRopeWithKnots(data, 10);
 }
 
 module.exports = {
