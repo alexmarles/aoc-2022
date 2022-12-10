@@ -2,7 +2,7 @@
 
 const { getInputData, sum } = require('../utils');
 
-function runDeviceWith(instructions, whatDoYouWant = 'strengts') {
+function runDeviceWith(instructions, whatDoYouWant = 'strengths') {
     const INTERVAL = 40;
     const LIT = '#';
     const DARK = '.';
