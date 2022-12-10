@@ -26,25 +26,21 @@ function runDeviceWith(instructions, whatDoYouWant = 'strengts') {
         else CRT[row][col] = DARK;
     }
 
-    function endCycle() {
-        cycle++;
-    }
-
-    function endOpCycle(V) {
-        x = x + V;
+    function endCycle(v) {
+        x = x + v;
         cycle++;
     }
 
     instructions.forEach(instruction => {
         const [op, value] = instruction.split(' ');
-        const V = Number(value) || null;
+        const v = Number(value) || null;
 
         startCycle();
-        endCycle();
+        endCycle(0);
         if (op === 'noop') return;
 
         startCycle();
-        endOpCycle(V);
+        endCycle(v);
     });
 
     if (whatDoYouWant === 'strengths')
