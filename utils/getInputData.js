@@ -17,7 +17,17 @@ function getRawInputData(file) {
         .split('\n');
 }
 
+function getInputDataInChunks(file) {
+    // If we need to split by double \n
+    return fs
+        .readFileSync(path.join(__dirname, '..', file))
+        .toString()
+        .trim()
+        .split('\n\n');
+}
+
 module.exports = {
     getInputData,
+    getInputDataInChunks,
     getRawInputData,
 };
