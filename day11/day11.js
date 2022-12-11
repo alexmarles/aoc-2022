@@ -2,6 +2,10 @@
 
 const { getInputDataInChunks } = require('../utils');
 
+const gcd = (a, b) => (a ? gcd(b % a, a) : b);
+
+const lcm = (a, b) => (a * b) / gcd(a, b);
+
 function parseMonkey(monkey) {
     const items = monkey
         .match(/^\s*Starting\sitems: ([0-9,\s]*)$/m)[1]
@@ -53,6 +57,34 @@ function day11A(file) {
     return monkeyBusiness;
 }
 
+function day11B(file) {
+    const ROUNDS = 10000;
+    const data = getInputDataInChunks(file);
+    const monkeys = data.map(parseMonkey);
+    const factor = monkeys.map(m => m.test).reduce(lcm);
+
+    function monkeysTurn(monkey) {
+        monkey.items.forEach((item, i) => {
+            let worry = monkey.op(item);
+            worry = worry % factor;
+            const { ifTrue, ifFalse } = monkey;
+            const to = worry % monkey.test === 0 ? ifTrue : ifFalse;
+            monkeys[to].items.push(worry);
+            monkey.inspected++;
+        });
+        monkey.items = [];
+    }
+
+    for (let i = 0; i < ROUNDS; i++) monkeys.forEach(monkeysTurn);
+
+    return monkeys
+        .map(m => m.inspected)
+        .sort((a, b) => b - a)
+        .slice(0, 2)
+        .reduce((acc, curr) => acc * curr, 1);
+}
+
 module.exports = {
     day11A,
+    day11B,
 };
