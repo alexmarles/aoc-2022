@@ -67,6 +67,30 @@ function day13A(file) {
     return result;
 }
 
+function day13B(file) {
+    const dividers = [[[2]], [[6]]];
+    const data = getInputData(file)
+        .filter(e => e !== '')
+        .map(e => JSON.parse(e))
+        .concat(dividers);
+
+    for (let i = 0; i < data.length; i++) {
+        for (j = 0; j < data.length - i - 1; j++) {
+            if (compare({ left: data[j], right: data[j + 1] }) !== OK) {
+                const temp = data[j];
+                data[j] = data[j + 1];
+                data[j + 1] = temp;
+            }
+        }
+    }
+
+    const result =
+        (data.indexOf(dividers[0]) + 1) * (data.indexOf(dividers[1]) + 1);
+
+    return result;
+}
+
 module.exports = {
     day13A,
+    day13B,
 };
