@@ -6,9 +6,8 @@ function getTaxicabDistance({ p, q }) {
     return Math.abs(p.x - q.x) + Math.abs(p.y - q.y);
 }
 
-function day15A(file, rowToCheck = 10) {
-    const data = getInputData(file);
-    const sensors = data.map(line => {
+function parseSensorsFrom(data) {
+    return data.map(line => {
         const sensor = {};
         const beacon = {};
         const [_s, _a, x1, y1, _c, _b, _i, _at, x2, y2] = line.split(' ');
@@ -20,7 +19,9 @@ function day15A(file, rowToCheck = 10) {
 
         return sensor;
     });
+}
 
+function getOccupiedPositionsInRow(sensors, rowToCheck) {
     const y = rowToCheck;
     const intervals = [];
     sensors
@@ -35,7 +36,7 @@ function day15A(file, rowToCheck = 10) {
                 if (leftX < rightX) intervals.push([leftX, rightX]);
             }
         });
-    intervals.sort((a, b) => a[0] - b[0]);
+
     const mergedIntervals = [intervals[0]];
     for (let i = 0; i < intervals.length; i++) {
         const current = intervals[i];
@@ -46,9 +47,16 @@ function day15A(file, rowToCheck = 10) {
             mergedIntervals.push(current);
         }
     }
-    return mergedIntervals
-        .map(i => i[1] - i[0])
-        .reduce((acc, curr) => acc + curr, 0);
+
+    return mergedIntervals;
+}
+
+function day15A(file, rowToCheck = 10) {
+    const data = getInputData(file);
+    const sensors = parseSensorsFrom(data);
+    const intervals = getOccupiedPositionsInRow(sensors, rowToCheck);
+
+    return intervals.map(i => i[1] - i[0]).reduce((acc, curr) => acc + curr, 0);
 }
 
 module.exports = {
