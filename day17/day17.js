@@ -45,145 +45,128 @@ const ROCKS = [
 const LEFT = '<';
 const RIGHT = '>';
 
+const MOVES = {
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+    down: { x: 0, y: -1 },
+};
+
 const WIDTH = 7;
 const FLOOR = 0;
 const START = { x: 2, y: 4 };
 
-function checkCollisionLeft(rock, room) {
+function checkCollision(dir, rock, room) {
     let collision = false;
     let i = 0;
     while (!collision && i < rock.length) {
         const { x, y } = rock[i];
-        collision = x === 0 || room.has(`${x - 1}_${y}`);
-        i++;
-    }
-
-    return collision;
-}
-
-function checkCollisionRight(rock, room) {
-    let collision = false;
-    let i = 0;
-    while (!collision && i < rock.length) {
-        const { x, y } = rock[i];
-        collision = x === WIDTH - 1 || room.has(`${x + 1}_${y}`);
-        i++;
-    }
-
-    return collision;
-}
-
-function checkCollisionDown(rock, room) {
-    let collision = false;
-    let i = 0;
-    while (!collision && i < rock.length) {
-        const { x, y } = rock[i];
-        collision = y - 1 === FLOOR || room.has(`${x}_${y - 1}`);
-        i++;
-    }
-
-    return collision;
-}
-
-function moveLeft(rock) {
-    rock.forEach(c => {
-        c.x--;
-    });
-}
-
-function moveRight(rock) {
-    rock.forEach(c => {
-        c.x++;
-    });
-}
-
-function moveDown(rock) {
-    rock.forEach(c => {
-        c.y--;
-    });
-}
-
-function printRoom(mapping) {
-    const room = [...new Array(20)].map(() => [...new Array(7)].map(() => '·'));
-    for (let y = 19; y > 0; y--) {
-        for (let x = 0; x < 7; x++) {
-            room[y][x] = mapping.get(`${x}_${y}`) || '·';
+        switch (dir) {
+            case 'left':
+                collision = x === 0 || room.has(`${x - 1}_${y}`);
+                break;
+            case 'right':
+                collision = x === WIDTH - 1 || room.has(`${x + 1}_${y}`);
+                break;
+            case 'down':
+                collision = y === FLOOR + 1 || room.has(`${x}_${y - 1}`);
+                break;
+            default:
+                break;
         }
+        i++;
     }
-    console.log(
-        room
-            .reverse()
-            .map(r => r.join(''))
-            .join('\n')
-    );
+
+    return collision;
+}
+
+function move(dir, rock) {
+    rock.forEach(c => {
+        c.x = c.x + MOVES[dir].x;
+        c.y = c.y + MOVES[dir].y;
+    });
 }
 
 function day17A(file, turns = 2022) {
     const data = getInputData(file)[0].split('');
 
+    let cache;
+
     const room = new Map();
-    let height = FLOOR;
+    const heightAt = new Map();
     let step = 0;
-    for (let t = 0; t < turns; t++) {
-        const rock = JSON.parse(JSON.stringify(ROCKS[t % ROCKS.length]));
-        // console.log('Preparing rock', rock);
-        rock.forEach(c => {
-            c.x = c.x + START.x;
-            c.y = c.y + height + START.y;
-        });
-        // console.log('A new rock begins falling', rock);
 
-        let isFalling = true;
-        while (isFalling) {
-            const jet = data[step % data.length];
-            if (jet === LEFT) {
-                if (!checkCollisionLeft(rock, room)) {
-                    // console.log('Jet of gas pushes rock left');
-                    moveLeft(rock);
-                } else {
-                    // console.log(
-                    //     'Jet of gas pushes rock left, but nothing happens'
-                    // );
+    let patternFound = false;
+    let t = 0;
+
+    function runForNTurns(nTurns, baseHeight = FLOOR) {
+        // console.log('RUN FOR', nTurns, 'turns');
+        let height = baseHeight;
+        let keepRunning = true;
+        while (t < nTurns && keepRunning) {
+            const rock = JSON.parse(JSON.stringify(ROCKS[t % ROCKS.length]));
+            rock.forEach(c => {
+                c.x = c.x + START.x;
+                c.y = c.y + height + START.y;
+            });
+
+            let isFalling = true;
+            while (isFalling) {
+                const jet = data[step % data.length];
+                if (jet === LEFT) {
+                    if (!checkCollision('left', rock, room)) move('left', rock);
+                } else if (jet === RIGHT) {
+                    if (!checkCollision('right', rock, room))
+                        move('right', rock);
                 }
-            } else if (jet === RIGHT) {
-                if (!checkCollisionRight(rock, room)) {
-                    // console.log('Jet of gas pushes rock right');
-                    moveRight(rock);
-                } else {
-                    // console.log(
-                    //     'Jet of gas pushes rock right, but nothing happens'
-                    // );
+                isFalling = !checkCollision('down', rock, room);
+                if (isFalling) move('down', rock);
+                step++;
+            }
+
+            rock.forEach(({ x, y }) => {
+                room.set(`${x}_${y}`, '#');
+            });
+            const highestRockPoint = Math.max.apply(
+                Math,
+                rock.map(r => r.y)
+            );
+
+            height = Math.max(height, highestRockPoint);
+            heightAt.set(t, height);
+            if (t > 4001 && !patternFound && t % ROCKS.length === 0) {
+                if (!cache) {
+                    cache = {
+                        jet: step % data.length,
+                        turn: t,
+                    };
+                    // console.log({ cache });
+                } else if (cache.jet === step % data.length) {
+                    patternFound = true;
+                    keepRunning = false;
                 }
             }
-            isFalling = !checkCollisionDown(rock, room);
-            if (isFalling) {
-                moveDown(rock);
-                // console.log('Rock falls 1 unit');
-            } else {
-                // console.log(
-                //     'Rock falls 1 unit, causing it to come to rest',
-                //     rock
-                // );
-            }
-            step++;
+            if (keepRunning) t++;
         }
-
-        rock.forEach(({ x, y }) => {
-            room.set(`${x}_${y}`, '#');
-        });
-        const highestRockPoint = Math.max.apply(
-            Math,
-            rock.map(r => r.y)
-        );
-
-        height = Math.max(height, highestRockPoint);
-        // console.log({ height });
-        // printRoom(room);
+        return height;
     }
 
-    // console.log(height);
+    let result = runForNTurns(turns);
 
-    return height;
+    if (patternFound) {
+        const previous = cache.turn;
+        const pattern = t - previous;
+        const baseHeight = heightAt.get(previous);
+        const remainder = (turns - previous) % pattern;
+        const iterations = (turns - previous - remainder) / pattern;
+        const totalHeight = runForNTurns(pattern + remainder, result);
+        const patternHeight = heightAt.get(previous + pattern) - baseHeight;
+        const remainderHeight = totalHeight - patternHeight - baseHeight;
+        // const remainderHeight = runForNTurns(remainder, patternHeight);
+        result = baseHeight + patternHeight * iterations + remainderHeight - 1;
+    }
+
+    // console.log({ result });
+    return result;
 }
 
 module.exports = {
