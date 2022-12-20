@@ -4,8 +4,7 @@ const { getInputData } = require('../utils');
 
 const MINUTES = 24;
 
-function day19A(file) {
-    const data = getInputData(file);
+function collectGeodes(data, initialTime) {
     const blueprints = data.map(line => {
         const [_, bp] = line.split(':');
         const steps = bp.split('.');
@@ -118,8 +117,21 @@ function day19A(file) {
     }
 
     const totalGeodes = blueprints.map(bp => {
-        return checkScenario(bp, {}, MINUTES, initialRobots, initialMaterials);
+        return checkScenario(
+            bp,
+            {},
+            initialTime,
+            initialRobots,
+            initialMaterials
+        );
     });
+
+    return totalGeodes;
+}
+
+function day19A(file) {
+    const data = getInputData(file);
+    const totalGeodes = collectGeodes(data, MINUTES);
 
     return totalGeodes.reduce((acc, curr, i) => acc + curr * (i + 1), 0);
 }
