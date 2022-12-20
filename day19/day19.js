@@ -70,7 +70,12 @@ function collectGeodes(data, initialTime) {
         let maxGeodes = materials.geode + robots.geode * time;
 
         for (let type of Object.keys(robots)) {
-            if (type !== 'geode' && robots[type] >= bp.maxSpend[type]) continue;
+            if (
+                type !== 'geode' &&
+                robots[type] * time >=
+                    bp.maxSpend[type] * time - materials[type]
+            )
+                continue;
 
             let wait = 0;
             let canContinue = true;
@@ -140,7 +145,6 @@ function day19B(file) {
     const data = getInputData(file);
     const totalGeodes = collectGeodes(data.slice(0, 3), 32);
 
-    console.log({ totalGeodes });
     return totalGeodes.reduce((acc, curr) => acc * curr, 1);
 }
 
