@@ -138,10 +138,9 @@ function day19A(file) {
 
 function day19B(file) {
     const data = getInputData(file);
-    const totalGeodes = collectGeodes(data.slice(0, 1), 32);
+    const totalGeodes = collectGeodes(data.slice(0, 3), 32);
 
-    console.log(totalGeodes);
-    return totalGeodes;
+    console.log({ totalGeodes });
     return totalGeodes.reduce((acc, curr) => acc * curr, 1);
 }
 
