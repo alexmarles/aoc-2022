@@ -1,18 +1,17 @@
 // --- Day 16: Proboscidea Volcanium ---
 
-const { getInputData, max, sum } = require('../utils');
-const dijkstra = require('dijkstrajs');
+const { getInputData } = require('../utils');
 
 function parseValves(data) {
     const valves = {};
     data.forEach(l => {
         const [valve, _] = l.split(';');
         const [_v, name, _h, _f, r] = valve.split(' ');
-        const rate = Number(r.split('=')[1]);
+        const flow = Number(r.split('=')[1]);
         const tunnels = l.split(/valve[s]*\s/)[1].split(', ');
 
         valves[name] = {
-            rate,
+            flow,
             tunnels,
         };
     });
@@ -20,42 +19,86 @@ function parseValves(data) {
     return valves;
 }
 
-function buildGraph(valves) {
-    const graph = {};
-    for (const name of valves.keys()) {
-        graph[name] = {};
-        valves.get(name).tunnels.forEach(t => {
-            graph[name][t] = 2;
-        });
+function getDistances(map) {
+    const dists = {};
+    const nonEmpty = [];
+
+    for (let valve of Object.keys(map)) {
+        if (valve !== 'AA' && !map[valve].flow) continue;
+
+        if (valve !== 'AA') nonEmpty.push(valve);
+
+        dists[valve] = { [valve]: 0, AA: 0 };
+        const visited = new Set([valve]);
+        const queue = [[0, valve]];
+
+        while (queue.length) {
+            const [distance, position] = queue.shift();
+            for (let neighbour of map[position].tunnels) {
+                if (visited.has(neighbour)) continue;
+
+                visited.add(neighbour);
+                if (map[neighbour].flow) dists[valve][neighbour] = distance + 1;
+                queue.push([distance + 1, neighbour]);
+            }
+        }
+
+        delete dists[valve][valve];
+        if (valve !== 'AA') delete dists[valve]['AA'];
     }
 
-    return graph;
+    return [dists, nonEmpty];
 }
 
-function moveTo(valve, all, currentRate, available, time, path) {
-    time--;
-    if (time === 0)
-        return {
-            path,
-            currentRate,
-        };
+function calculateFlowRate(time, valve, map, dists, indices, bitmask, cache) {
+    const key = [time, valve, bitmask].join();
+    if (cache.has(key)) return cache.get(key);
 
-    if (available.length === 0)
-        return {
-            path,
-            currentRate,
-        };
+    let maxRate = 0;
+    for (let neighbour of Object.keys(dists[valve])) {
+        const bit = 1 << indices[neighbour];
+        if (bitmask & bit) continue;
+        const remainingTime = time - (dists[valve][neighbour] + 1);
+        if (remainingTime <= 0) continue;
+
+        const flow = map[neighbour].flow * remainingTime;
+        maxRate = Math.max(
+            maxRate,
+            calculateFlowRate(
+                remainingTime,
+                neighbour,
+                map,
+                dists,
+                indices,
+                bitmask | bit,
+                cache
+            ) + flow
+        );
+    }
+
+    cache.set(key, maxRate);
+    return maxRate;
 }
 
 function day16A(file) {
     const data = getInputData(file);
-    const valves = parseValves(data);
-    const graph = buildGraph(valves);
-    const available = Object.keys(valves);
-    const rate = moveTo('AA', valves, visited, 30);
-    console.log({ rate, time });
+    const map = parseValves(data);
+    const [dists, nonEmpty] = getDistances(map);
+    const indices = {};
+    nonEmpty.forEach((valve, i) => {
+        indices[valve] = i;
+    });
+    const totalFlow = calculateFlowRate(
+        30,
+        'AA',
+        map,
+        dists,
+        indices,
+        0,
+        new Map()
+    );
 
-    return data;
+    return totalFlow;
 }
 
 module.exports = {
