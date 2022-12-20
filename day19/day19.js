@@ -136,6 +136,15 @@ function day19A(file) {
     return totalGeodes.reduce((acc, curr, i) => acc + curr * (i + 1), 0);
 }
 
+function day19B(file) {
+    const data = getInputData(file);
+    const totalGeodes = collectGeodes(data, 32);
+
+    return totalGeodes;
+    return totalGeodes.reduce((acc, curr) => acc * curr, 1);
+}
+
 module.exports = {
     day19A,
+    day19B,
 };
