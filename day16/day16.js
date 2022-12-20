@@ -101,6 +101,46 @@ function day16A(file) {
     return totalFlow;
 }
 
+function day16B(file) {
+    const data = getInputData(file);
+    const map = parseValves(data);
+    const [dists, nonEmpty] = getDistances(map);
+    const indices = {};
+    nonEmpty.forEach((valve, i) => {
+        indices[valve] = i;
+    });
+
+    const b = (1 << nonEmpty.length) - 1;
+
+    let maxRate = 0;
+    const cache = new Map();
+
+    for (let i = 0; i <= b; i++) {
+        const human = calculateFlowRate(
+            26,
+            'AA',
+            map,
+            dists,
+            indices,
+            i,
+            cache
+        );
+        const elephant = calculateFlowRate(
+            26,
+            'AA',
+            map,
+            dists,
+            indices,
+            b ^ i,
+            cache
+        );
+        maxRate = Math.max(maxRate, human + elephant);
+    }
+
+    return maxRate;
+}
+
 module.exports = {
     day16A,
+    day16B,
 };
