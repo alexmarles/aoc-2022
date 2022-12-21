@@ -2,9 +2,9 @@
 
 const { getInputData } = require('../utils');
 
-function createDLL(data) {
+function createDLL(data, decryptionKey = 1) {
     const list = data.map(n => ({
-        v: Number(n),
+        v: Number(n) * decryptionKey,
         prev: null,
         next: null,
     }));
@@ -16,36 +16,38 @@ function createDLL(data) {
     return list;
 }
 
-function circleMix(list) {
+function circleMix(list, times = 1) {
     let zero;
-    for (let node of list) {
-        if (node.v === 0) {
-            zero = node;
-            continue;
-        }
+    for (let _ = 0; _ < times; _++) {
+        for (let node of list) {
+            if (node.v === 0) {
+                zero = node;
+                continue;
+            }
 
-        const mod = list.length - 1;
-        let target = node;
-        if (node.v > 0) {
-            for (let _ = 0; _ < node.v % mod; _++) target = target.next;
-            if (target === node) continue;
+            const mod = list.length - 1;
+            let target = node;
+            if (node.v > 0) {
+                for (let _ = 0; _ < node.v % mod; _++) target = target.next;
+                if (target === node) continue;
 
-            node.next.prev = node.prev;
-            node.prev.next = node.next;
-            target.next.prev = node;
-            node.next = target.next;
-            target.next = node;
-            node.prev = target;
-        } else {
-            for (let _ = 0; _ > node.v % mod; _--) target = target.prev;
-            if (target === node) continue;
+                node.next.prev = node.prev;
+                node.prev.next = node.next;
+                target.next.prev = node;
+                node.next = target.next;
+                target.next = node;
+                node.prev = target;
+            } else {
+                for (let _ = 0; _ > node.v % mod; _--) target = target.prev;
+                if (target === node) continue;
 
-            node.prev.next = node.next;
-            node.next.prev = node.prev;
-            target.prev.next = node;
-            node.prev = target.prev;
-            target.prev = node;
-            node.next = target;
+                node.prev.next = node.next;
+                node.next.prev = node.prev;
+                target.prev.next = node;
+                node.prev = target.prev;
+                target.prev = node;
+                node.next = target;
+            }
         }
     }
 
@@ -58,7 +60,23 @@ function day20A(file) {
     let zeroRef = circleMix(list);
 
     let total = 0;
+    for (let _ = 0; _ < 3; _++) {
+        for (let _ = 0; _ < 1000; _++) {
+            zeroRef = zeroRef.next;
+        }
+        total += zeroRef.v;
+    }
 
+    return total;
+}
+
+function day20B(file) {
+    const data = getInputData(file);
+    const decryptionKey = 811589153;
+    const list = createDLL(data, decryptionKey);
+    let zeroRef = circleMix(list, 10);
+
+    let total = 0;
     for (let _ = 0; _ < 3; _++) {
         for (let _ = 0; _ < 1000; _++) {
             zeroRef = zeroRef.next;
@@ -71,4 +89,5 @@ function day20A(file) {
 
 module.exports = {
     day20A,
+    day20B,
 };
