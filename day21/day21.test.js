@@ -1,6 +1,6 @@
 const { day21A, day21B } = require('./day21');
 
-describe('Day 20 A', () => {
+describe('Day 21 A', () => {
     test('should solve the example', () => {
         const result = day21A('day21/exampleData');
         expect(result).toBe(152);
@@ -12,7 +12,7 @@ describe('Day 20 A', () => {
     });
 });
 
-describe('Day 20 B', () => {
+describe('Day 21 B', () => {
     test('should solve the example', () => {
         const result = day21B('day21/exampleData');
         expect(result).toBe(301);
