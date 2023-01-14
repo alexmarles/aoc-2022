@@ -1,7 +1,6 @@
 // --- Day 18: Boiling Boulders ---
 
-const { getInputData, max } = require('../utils');
-const dijkstra = require('dijkstrajs');
+const { getInputData, max, min } = require('../utils');
 
 const CUBE_SIDES = 6;
 
@@ -21,81 +20,82 @@ function getContactSides(data) {
 
 function day18A(file) {
     const data = getInputData(file);
-    const expSides = data.length * CUBE_SIDES;
-    return expSides - getContactSides(data);
+    return data.length * CUBE_SIDES - getContactSides(data);
 }
 
 function day18B(file) {
     const data = getInputData(file);
     let expSides = data.length * CUBE_SIDES - getContactSides(data);
 
-    const graph = {};
     let maxX = max(data.map(l => Number(l.split(',')[0])));
     let maxY = max(data.map(l => Number(l.split(',')[1])));
     let maxZ = max(data.map(l => Number(l.split(',')[2])));
-    for (let x = 1; x < maxX; x++) {
-        for (let y = 1; y < maxY; y++) {
-            for (let z = 1; z < maxZ; z++) {
-                if (!data.includes(`${x},${y},${z}`)) {
+    let minX = min(data.map(l => Number(l.split(',')[0])));
+    let minY = min(data.map(l => Number(l.split(',')[1])));
+    let minZ = min(data.map(l => Number(l.split(',')[2])));
+
+    const graph = {};
+    for (let x = minX + 1; x <= maxX - 1; x++) {
+        for (let y = minY + 1; y <= maxY - 1; y++) {
+            for (let z = minZ + 1; z <= maxZ - 1; z++) {
+                const key = [x, y, z].join(',');
+                if (!data.includes(key)) {
                     const neighbours = [];
-                    if (!data.includes(`${x + 1},${y},${z}`) && x < maxX) {
+                    if (!data.includes(`${x + 1},${y},${z}`)) {
                         neighbours.push(`${x + 1},${y},${z}`);
                     }
-                    if (!data.includes(`${x - 1},${y},${z}`) && x > 1) {
+                    if (!data.includes(`${x - 1},${y},${z}`)) {
                         neighbours.push(`${x - 1},${y},${z}`);
                     }
-                    if (!data.includes(`${x},${y + 1},${z}`) && y < maxY) {
+                    if (!data.includes(`${x},${y + 1},${z}`)) {
                         neighbours.push(`${x},${y + 1},${z}`);
                     }
-                    if (!data.includes(`${x},${y - 1},${z}`) && y > 1) {
+                    if (!data.includes(`${x},${y - 1},${z}`)) {
                         neighbours.push(`${x},${y - 1},${z}`);
                     }
-                    if (!data.includes(`${x},${y},${z + 1}`) && z < maxZ) {
+                    if (!data.includes(`${x},${y},${z + 1}`)) {
                         neighbours.push(`${x},${y},${z + 1}`);
                     }
-                    if (!data.includes(`${x},${y},${z - 1}`) && z > 1) {
+                    if (!data.includes(`${x},${y},${z - 1}`)) {
                         neighbours.push(`${x},${y},${z - 1}`);
                     }
-                    graph[`${x},${y},${z}`] = neighbours;
+                    graph[key] = neighbours;
                 }
             }
         }
     }
 
-    const pockets = new Set(Object.keys(graph));
+    const pockets = Object.keys(graph);
     const toRemove = new Set();
-
-    function markForRemoval(neighbours) {
-        neighbours.forEach(n => {
-            if (!toRemove.has(n) && pockets.has(n)) {
-                toRemove.add(n);
-                graph[n] && markForRemoval(graph[n]);
-            }
+    pockets.forEach(p => {
+        const neighbours = graph[p];
+        neighbours.forEach(neighbour => {
+            const [x, y, z] = neighbour.split(',').map(n => Number(n));
+            if (
+                x === minX ||
+                x === maxX ||
+                y === minY ||
+                y === maxY ||
+                z === minZ ||
+                z === maxZ
+            )
+                toRemove.add(p);
         });
-    }
-
-    for (let key of pockets.keys()) {
-        const [x, y, z] = key.split(',').map(n => Number(n));
-        if (x <= 1 || x >= maxX || y <= 1 || y >= maxY || z <= 1 || z >= maxZ) {
-            toRemove.add(key);
-            markForRemoval(graph[key]);
-        }
-    }
-
-    // console.log({ pockets: pockets.size });
-    // console.log({ toRemove: toRemove.size });
-    [...toRemove].forEach(n => {
-        pockets.delete(n);
     });
-    // console.log({ pockets: pockets.size });
+    let prevSize;
+    do {
+        prevSize = toRemove.size;
+        pockets.forEach(p => {
+            const neighbours = graph[p];
+            neighbours.forEach(neighbour => {
+                if (toRemove.has(neighbour)) toRemove.add(p);
+            });
+        });
+    } while (prevSize !== toRemove.size);
 
-    // TODO Join points in pockets that are in the same pocket of air
-
-    const pocketSides =
-        pockets.size * CUBE_SIDES - getContactSides([...pockets]);
-    console.log({ result: expSides - pocketSides });
-
-    return expSides - pocketSides;
+    const isolated = pockets.filter(p => !toRemove.has(p));
+    const internalCollidingSides = getContactSides(isolated);
+    return expSides - (isolated.length * CUBE_SIDES - internalCollidingSides);
 }
 
 module.exports = {

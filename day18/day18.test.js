@@ -18,11 +18,8 @@ describe('Day 18 B', () => {
         expect(result).toBe(58);
     });
 
-    xtest('should solve the puzzle', () => {
+    test('should solve the puzzle', () => {
         const result = day18B('day18/inputData');
-        expect(result).toBeGreaterThan(1012);
-        expect(result).not.toBe(1998);
-        expect(result).not.toBe(2034);
-        expect(result).toBeLessThan(3292);
+        expect(result).toBe(2064);
     });
 });
