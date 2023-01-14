@@ -86,12 +86,26 @@ function move(dir, rock) {
     });
 }
 
+function summarize(room) {
+    const top = [...new Array(7)].map(() => -20);
+    for (let coord of room.keys()) {
+        const [x, y] = coord.split('_').map(n => Number(n));
+        top[x] = Math.max(top[x], y);
+    }
+    const topMost = Math.max.apply(Math, top);
+
+    return top.map(x => x - topMost);
+}
+
 function runForNTurns(nTurns, jets) {
     const room = new Map();
     const heights = new Set();
     let height = FLOOR;
     let rockCount = 0;
     let step = 0;
+
+    let cache = {};
+    let offset = 0;
 
     while (rockCount < nTurns) {
         const rockIndex = rockCount % ROCKS.length;
@@ -122,9 +136,26 @@ function runForNTurns(nTurns, jets) {
         height = Math.max.apply(Math, [...heights]);
 
         rockCount++;
+        if (rockCount >= nTurns) break;
+
+        const tops = summarize(room).join('_');
+        const key = [jetIndex, rockIndex, tops].join(',');
+        if (cache.hasOwnProperty(key)) {
+            const { lastRock, lastHeight } = cache[key];
+            const remainder = nTurns - rockCount;
+            const repetitions = Math.floor(remainder / (rockCount - lastRock));
+            offset = repetitions * (height - lastHeight);
+            rockCount += repetitions * (rockCount - lastRock);
+            cache = {};
+        }
+
+        cache[key] = {
+            lastRock: rockCount,
+            lastHeight: height,
+        };
     }
 
-    return height;
+    return height + offset;
 }
 
 function day17A(file) {
@@ -135,6 +166,15 @@ function day17A(file) {
     return result;
 }
 
+function day17B(file) {
+    const data = getInputData(file)[0].split('');
+
+    let result = runForNTurns(1000000000000, data);
+
+    return result;
+}
+
 module.exports = {
     day17A,
+    day17B,
 };
