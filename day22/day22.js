@@ -14,8 +14,34 @@ const FACING = {
     '0_-1': 3,
 };
 
-function day22A(file) {
-    const data = getRawInputData(file);
+function makeATurn(turn, currentDirection) {
+    const directions = Object.keys(FACING);
+    const nextI =
+        (directions.length +
+            directions.indexOf(currentDirection) +
+            (turn === CLOCKWISE ? 1 : -1)) %
+        directions.length;
+    const next = directions[nextI].split('_').map(n => Number(n));
+    return { x: next[0], y: next[1] };
+}
+
+function nextPosition(currentPosition, currentDirection, board) {
+    const { left, right } = board.get(`row_${currentPosition.y}`);
+    const { up, down } = board.get(`col_${currentPosition.x}`);
+    let nextX = currentPosition.x + currentDirection.x;
+    let nextY = currentPosition.y + currentDirection.y;
+    if (nextX > right) nextX = left;
+    if (nextX < left) nextX = right;
+    if (nextY > down) nextY = up;
+    if (nextY < up) nextY = down;
+
+    return {
+        x: nextX,
+        y: nextY,
+    };
+}
+
+function traverse(data) {
     const steps = data
         .slice(data.length - 2)[0]
         .split(/[RL]+/)
@@ -27,34 +53,6 @@ function day22A(file) {
     const board = new Map();
     let position = { x: 0, y: 0 };
     let direction = { x: 1, y: 0 };
-
-    function makeATurn(turn) {
-        const current = `${direction.x}_${direction.y}`;
-        const directions = Object.keys(FACING);
-        const nextI =
-            (directions.length +
-                directions.indexOf(current) +
-                (turn === CLOCKWISE ? 1 : -1)) %
-            directions.length;
-        const next = directions[nextI].split('_').map(n => Number(n));
-        return { x: next[0], y: next[1] };
-    }
-
-    function nextPosition(currentPosition, currentDirection) {
-        const { left, right } = board.get(`row_${currentPosition.y}`);
-        const { up, down } = board.get(`col_${currentPosition.x}`);
-        let nextX = currentPosition.x + currentDirection.x;
-        let nextY = currentPosition.y + currentDirection.y;
-        if (nextX > right) nextX = left;
-        if (nextX < left) nextX = right;
-        if (nextY > down) nextY = up;
-        if (nextY < up) nextY = down;
-
-        return {
-            x: nextX,
-            y: nextY,
-        };
-    }
 
     data.splice(data.length - 3);
     const maxWidth = Math.max.apply(
@@ -87,15 +85,27 @@ function day22A(file) {
 
     for (let i = 0; i < steps.length; i++) {
         for (let _ = 0; _ < steps[i]; _++) {
-            const next = nextPosition(position, direction);
+            const next = nextPosition(position, direction, board);
             if (board.get(`${next.x}_${next.y}`) === WALL) {
                 continue;
             }
 
             position = next;
         }
-        if (turns[i]) direction = makeATurn(turns[i]);
+
+        const current = `${direction.x}_${direction.y}`;
+        if (turns[i]) direction = makeATurn(turns[i], current);
     }
+
+    return {
+        position,
+        direction,
+    };
+}
+
+function day22A(file) {
+    const data = getRawInputData(file);
+    const { position, direction } = traverse(data);
 
     const result =
         1000 * (position.y + 1) +
