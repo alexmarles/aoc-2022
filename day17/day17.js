@@ -86,86 +86,52 @@ function move(dir, rock) {
     });
 }
 
-function day17A(file, turns = 2022) {
-    const data = getInputData(file)[0].split('');
-
-    let cache;
-
+function runForNTurns(nTurns, jets) {
     const room = new Map();
-    const heightAt = new Map();
+    const heights = new Set();
+    let height = FLOOR;
+    let rockCount = 0;
     let step = 0;
 
-    let patternFound = false;
-    let t = 0;
+    while (rockCount < nTurns) {
+        const rockIndex = rockCount % ROCKS.length;
+        const rock = JSON.parse(JSON.stringify(ROCKS[rockIndex]));
+        rock.forEach(c => {
+            c.x = c.x + START.x;
+            c.y = c.y + height + START.y;
+        });
 
-    function runForNTurns(nTurns, baseHeight = FLOOR) {
-        // console.log('RUN FOR', nTurns, 'turns');
-        let height = baseHeight;
-        let keepRunning = true;
-        while (t < nTurns && keepRunning) {
-            const rock = JSON.parse(JSON.stringify(ROCKS[t % ROCKS.length]));
-            rock.forEach(c => {
-                c.x = c.x + START.x;
-                c.y = c.y + height + START.y;
-            });
-
-            let isFalling = true;
-            while (isFalling) {
-                const jet = data[step % data.length];
-                if (jet === LEFT) {
-                    if (!checkCollision('left', rock, room)) move('left', rock);
-                } else if (jet === RIGHT) {
-                    if (!checkCollision('right', rock, room))
-                        move('right', rock);
-                }
-                isFalling = !checkCollision('down', rock, room);
-                if (isFalling) move('down', rock);
-                step++;
-            }
-
-            rock.forEach(({ x, y }) => {
-                room.set(`${x}_${y}`, '#');
-            });
-            const highestRockPoint = Math.max.apply(
-                Math,
-                rock.map(r => r.y)
-            );
-
-            height = Math.max(height, highestRockPoint);
-            heightAt.set(t, height);
-            if (t > 4001 && !patternFound && t % ROCKS.length === 0) {
-                if (!cache) {
-                    cache = {
-                        jet: step % data.length,
-                        turn: t,
-                    };
-                    // console.log({ cache });
-                } else if (cache.jet === step % data.length) {
-                    patternFound = true;
-                    keepRunning = false;
-                }
-            }
-            if (keepRunning) t++;
+        let isFalling = true;
+        let jetIndex;
+        while (isFalling) {
+            jetIndex = step % jets.length;
+            const jet = jets[jetIndex];
+            if (jet === LEFT && !checkCollision('left', rock, room))
+                move('left', rock);
+            else if (jet === RIGHT && !checkCollision('right', rock, room))
+                move('right', rock);
+            isFalling = !checkCollision('down', rock, room);
+            if (isFalling) move('down', rock);
+            step++;
         }
-        return height;
+
+        rock.forEach(({ x, y }) => {
+            room.set(`${x}_${y}`, '#');
+            heights.add(y);
+        });
+        height = Math.max.apply(Math, [...heights]);
+
+        rockCount++;
     }
 
-    let result = runForNTurns(turns);
+    return height;
+}
 
-    if (patternFound) {
-        const previous = cache.turn;
-        const pattern = t - previous;
-        const baseHeight = heightAt.get(previous);
-        const remainder = (turns - previous) % pattern;
-        const iterations = (turns - previous - remainder) / pattern;
-        const totalHeight = runForNTurns(pattern + remainder, result);
-        const patternHeight = heightAt.get(previous + pattern) - baseHeight;
-        const remainderHeight = totalHeight - patternHeight - baseHeight;
-        // const remainderHeight = runForNTurns(remainder, patternHeight);
-        result = baseHeight + patternHeight * iterations + remainderHeight - 1;
-    }
+function day17A(file) {
+    const data = getInputData(file)[0].split('');
 
-    // console.log({ result });
+    let result = runForNTurns(2022, data);
+
     return result;
 }
 
