@@ -8,45 +8,193 @@ const WALL = '#';
 const CLOCKWISE = 'R';
 const COUNTER = 'L';
 const FACING = {
-    '1_0': 0,
-    '0_1': 1,
-    '-1_0': 2,
-    '0_-1': 3,
+    '1_0': 0, // Right
+    '0_1': 1, // Down
+    '-1_0': 2, // Left
+    '0_-1': 3, // Up
 };
 
 function makeATurn(turn, currentDirection) {
+    const key = `${currentDirection.x}_${currentDirection.y}`;
     const directions = Object.keys(FACING);
     const nextI =
         (directions.length +
-            directions.indexOf(currentDirection) +
+            directions.indexOf(key) +
             (turn === CLOCKWISE ? 1 : -1)) %
         directions.length;
     const next = directions[nextI].split('_').map(n => Number(n));
     return { x: next[0], y: next[1] };
 }
 
-function nextPosition(currentPosition, currentDirection, board) {
-    const { left, right } = board.get(`row_${currentPosition.y}`);
-    const { up, down } = board.get(`col_${currentPosition.x}`);
-    let nextX = currentPosition.x + currentDirection.x;
-    let nextY = currentPosition.y + currentDirection.y;
-    if (nextX > right) nextX = left;
-    if (nextX < left) nextX = right;
-    if (nextY > down) nextY = up;
-    if (nextY < up) nextY = down;
+// Cube edges
+//            1-----5-----3
+//            |     |     |
+//            |     |     |
+//            2-----+-----4
+//            |     |
+//            |     |
+//      2-----+-----4
+//      |     |     |
+//      |     |     |
+//      1-----+-----3
+//      |     |
+//      |     |
+//      5-----3
+
+function nextPosition(currentPosition, currentDirection, board, flat) {
+    let nc = currentPosition.x + currentDirection.x;
+    let nr = currentPosition.y + currentDirection.y;
+    let newDirection = { ...currentDirection };
+    if (flat) {
+        const { left, right } = board.get(`row_${currentPosition.y}`);
+        const { top, bottom } = board.get(`col_${currentPosition.x}`);
+        if (nc > right) nc = left;
+        if (nc < left) nc = right;
+        if (nr > bottom) nr = top;
+        if (nr < top) nr = bottom;
+    } else {
+        // Edge 1-5
+        if (nr < 0 && nc >= 50 && nc < 100 && currentDirection.y === -1) {
+            newDirection = makeATurn(CLOCKWISE, currentDirection);
+            nr = nc + 100;
+            nc = 0;
+        } else if (
+            nc < 0 &&
+            nr >= 150 &&
+            nr < 200 &&
+            currentDirection.x === -1
+        ) {
+            newDirection = makeATurn(COUNTER, currentDirection);
+            nc = nr - 100;
+            nr = 0;
+        }
+        // Edge 5-3
+        else if (nr < 0 && nc >= 100 && nc < 150 && currentDirection.y === -1) {
+            nc = nc - 100;
+            nr = 199;
+        } else if (
+            nr >= 200 &&
+            nc >= 0 &&
+            nc < 50 &&
+            currentDirection.y === 1
+        ) {
+            nc = nc + 100;
+            nr = 0;
+        }
+        // Edge 3-4
+        else if (nc >= 150 && nr >= 0 && nr < 50 && currentDirection.x === 1) {
+            newDirection = makeATurn(
+                CLOCKWISE,
+                makeATurn(CLOCKWISE, currentDirection)
+            );
+            nc = 99;
+            nr = 149 - nr;
+        } else if (
+            nc === 100 &&
+            nr >= 100 &&
+            nr < 150 &&
+            currentDirection.x === 1
+        ) {
+            newDirection = makeATurn(
+                CLOCKWISE,
+                makeATurn(CLOCKWISE, currentDirection)
+            );
+            nc = 149;
+            nr = 149 - nr;
+        }
+        // Edge 4-+
+        else if (
+            nr === 50 &&
+            nc >= 100 &&
+            nc < 150 &&
+            currentDirection.y === 1
+        ) {
+            newDirection = makeATurn(CLOCKWISE, currentDirection);
+            nr = nc - 50;
+            nc = 99;
+        } else if (
+            nc === 100 &&
+            nr >= 50 &&
+            nr < 100 &&
+            currentDirection.x === 1
+        ) {
+            newDirection = makeATurn(COUNTER, currentDirection);
+            nc = nr + 50;
+            nr = 49;
+        }
+        // Edge 3-+
+        else if (
+            nr === 150 &&
+            nc >= 50 &&
+            nc < 100 &&
+            currentDirection.y === 1
+        ) {
+            newDirection = makeATurn(CLOCKWISE, currentDirection);
+            nr = nc + 100;
+            nc = 49;
+        } else if (
+            nc === 50 &&
+            nr >= 150 &&
+            nr < 200 &&
+            currentDirection.x === 1
+        ) {
+            newDirection = makeATurn(COUNTER, currentDirection);
+            nc = nr - 100;
+            nr = 149;
+        }
+        // Edge 2-+
+        else if (nr === 99 && nc >= 0 && nc < 50 && currentDirection.y === -1) {
+            newDirection = makeATurn(CLOCKWISE, currentDirection);
+            nr = nc + 50;
+            nc = 50;
+        } else if (
+            nc === 49 &&
+            nr >= 50 &&
+            nr < 100 &&
+            currentDirection.x === -1
+        ) {
+            newDirection = makeATurn(COUNTER, currentDirection);
+            nc = nr - 50;
+            nr = 100;
+        }
+        // Edge 1-2
+        else if (nc === 49 && nr >= 0 && nr < 50 && currentDirection.x === -1) {
+            newDirection = makeATurn(
+                CLOCKWISE,
+                makeATurn(CLOCKWISE, currentDirection)
+            );
+            nc = 0;
+            nr = 149 - nr;
+        } else if (
+            nc < 0 &&
+            nr >= 100 &&
+            nr < 150 &&
+            currentDirection.x === -1
+        ) {
+            newDirection = makeATurn(
+                CLOCKWISE,
+                makeATurn(CLOCKWISE, currentDirection)
+            );
+            nc = 50;
+            nr = 149 - nr;
+        }
+    }
 
     return {
-        x: nextX,
-        y: nextY,
+        position: {
+            x: nc,
+            y: nr,
+        },
+        direction: newDirection,
     };
 }
 
-function traverse(data) {
-    const steps = data
+function traverse(data, flat = true) {
+    const numbers = data
         .slice(data.length - 2)[0]
         .split(/[RL]+/)
         .map(n => Number(n));
-    const turns = data
+    const letters = data
         .slice(data.length - 2)[0]
         .split(/[\d]+/)
         .filter(d => !!d);
@@ -78,23 +226,21 @@ function traverse(data) {
             minY = Math.min(minY, y);
             maxY = Math.max(maxY, y);
         }
-        board.set(`col_${x}`, { up: minY, down: maxY });
+        board.set(`col_${x}`, { top: minY, bottom: maxY });
     }
-    while (!board.has(`${position.x}_${position.y}`)) position.x++;
     while (board.get(`${position.x}_${position.y}`) !== FLOOR) position.x++;
 
-    for (let i = 0; i < steps.length; i++) {
-        for (let _ = 0; _ < steps[i]; _++) {
-            const next = nextPosition(position, direction, board);
-            if (board.get(`${next.x}_${next.y}`) === WALL) {
+    for (let i = 0; i < numbers.length; i++) {
+        for (let _ = 0; _ < numbers[i]; _++) {
+            const next = nextPosition(position, direction, board, flat);
+            if (board.get(`${next.position.x}_${next.position.y}`) === WALL)
                 continue;
-            }
 
-            position = next;
+            position = next.position;
+            direction = next.direction;
         }
 
-        const current = `${direction.x}_${direction.y}`;
-        if (turns[i]) direction = makeATurn(turns[i], current);
+        if (letters[i]) direction = makeATurn(letters[i], direction);
     }
 
     return {
@@ -115,6 +261,19 @@ function day22A(file) {
     return result;
 }
 
+function day22B(file) {
+    const data = getRawInputData(file);
+    const { position, direction } = traverse(data, false);
+
+    const result =
+        1000 * (position.y + 1) +
+        4 * (position.x + 1) +
+        FACING[`${direction.x}_${direction.y}`];
+
+    return result;
+}
+
 module.exports = {
     day22A,
+    day22B,
 };
